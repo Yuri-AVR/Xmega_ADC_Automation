@@ -1,0 +1,51 @@
+# Build artifacts
+*.o
+*.a
+*.out
+*.elf
+*.hex
+*.bin
+*.asm
+*.lst
+*.map
+*.d
+
+# Build directories
+build/
+Debug/
+Release/
+obj/
+bin/
+
+# Atmel Studio specific
+*.atsuo
+.vs/
+*.cproj
+*.eep
+*.lss
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Dependencies
+*.dep
+
+# Object files
+*.o
+*.ko
+*.obj
+*.elf
+
+# Debug files
+*.dSYM/
+
+# Temporary files
+*.tmp
