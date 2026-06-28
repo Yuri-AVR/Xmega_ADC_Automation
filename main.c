@@ -18,7 +18,7 @@ higher bound for direct sunlight (saturation)
 #define LUX_MAX		1000	//Saturation of direct sunlight
 
 
-#define BSEL 12
+#define BSEL 207
 
 //Flag to mark end of ADC and ready to send via UART
 //Reset after UART TX
@@ -59,11 +59,13 @@ void led_toggle(void)
 
 void timer_init()
 {
-	TCC0.PER = 124999; //Period set by dividing this from 2Mhz
+	TCC0.PER = 31249; //Period set by dividing this from 2Mhz
 	TCC0.CNT = 0; //Initial value
 	
 	TCC0.INTCTRLA =	TC_OVFINTLVL_LO_gc; // Set Overflow level to low
-	TCC0.CTRLA = TC_CLKSEL_DIV256_gc; //Clock selection divide by 256
+	TCC0.CTRLA = TC_CLKSEL_DIV1024_gc; //Clock selection divide by 1024
+	//Since the lock is 32Mhz we need to divide 1024 to not overflow the 16 bit
+	//TCC0 which maxes out at 65535
 	
 	//2Mhz divided by 256 = 7812 per second. Times 2 for 1 sec is 15625
 	
