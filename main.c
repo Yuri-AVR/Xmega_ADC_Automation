@@ -1,4 +1,4 @@
-#define F_CPU 2000000UL //2Mhz unsigned long
+#define F_CPU 32000000UL //2Mhz unsigned long
 
 #include <avr/io.h>
 #include <avr/interrupt.h>
@@ -23,6 +23,16 @@ higher bound for direct sunlight (saturation)
 //Flag to mark end of ADC and ready to send via UART
 //Reset after UART TX
 volatile uint8_t send_flag = 0; 
+
+//Swtich to the 32Mhz clock from the initial 2Mhz default
+void clockinit(void)
+{
+	OSC.CTRL |= OSC_RC32MEN_bm;
+	while (!(OSC.STATUS & OSC_RC32MRDY_bm));
+	CCP = CCP_IOREG_gc;
+	CLK.CTRL = CLK_SCLKSEL_RC2M_gc;
+	
+}
 
 // TCC0 Overflow ISR -------------------------------
 ISR(TCC0_OVF_vect)
@@ -49,7 +59,7 @@ void led_toggle(void)
 
 void timer_init()
 {
-	TCC0.PER = 15624; //Period set by dividing this from 2Mhz
+	TCC0.PER = 124999; //Period set by dividing this from 2Mhz
 	TCC0.CNT = 0; //Initial value
 	
 	TCC0.INTCTRLA =	TC_OVFINTLVL_LO_gc; // Set Overflow level to low
