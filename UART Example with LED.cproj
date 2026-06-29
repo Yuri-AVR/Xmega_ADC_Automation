@@ -152,6 +152,12 @@
     <Compile Include="main.c">
       <SubType>compile</SubType>
     </Compile>
+    <Compile Include="tmp006.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="tmp006.h">
+      <SubType>compile</SubType>
+    </Compile>
     <Compile Include="uart.c">
       <SubType>compile</SubType>
     </Compile>

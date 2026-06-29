@@ -6,6 +6,7 @@
 #include "adc_light.h"
 #include "uart.h"
 #include "debug.h"
+#include "tmp006.h"
 
 /*
 Need some bounds for the ADC based off AVR and real life values
