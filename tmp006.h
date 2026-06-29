@@ -18,7 +18,7 @@
 #define TMP006_H_
 
 #include <avr/io.h>
-#include <stdint.h
+#include <stdint.h>
 
 
 //I2C address

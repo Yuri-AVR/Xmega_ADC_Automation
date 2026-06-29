@@ -17,7 +17,6 @@
 //Change these after import to match baud rate needed
 
 #define F_CPU	32000000UL
-#define BAUD	9600
 #define BSEL	207 //From (FCPU/(16*Baud)-1)
 
 // Function Prototypes
