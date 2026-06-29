@@ -77,10 +77,11 @@ void timer_init()
 
 int main(void)
 {
-	debug_init();
 	
-	clock_init();
-	uart_init();
+	
+	clock_init(); //Use 32Mhz clock
+	debug_init(); //output the clock to P7
+	uart_init(); //9600 baud rate, 8 bit no parity
 	uart_send_string(
 	"----------------------------------\r\n"
 	"ADC Light Meter\r\n"
@@ -88,8 +89,8 @@ int main(void)
 	"Shows RAW ADC Value and Light Value of	the Room\r\n"
 	"----------------------------------\r\n"
 	);
-	led_init();
-	timer_init();
+	led_init(); //Toggle every 1 sec
+	timer_init(); //TCC0 overflow 
 	adc_init(); //Enable ADC channel PA0 light sensor
 	
 	char buf[32]; //Array holds the formatted string from ADC
