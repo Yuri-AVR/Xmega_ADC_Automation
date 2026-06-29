@@ -5,6 +5,7 @@
 #include <stdio.h>
 #include "adc_light.h"
 #include "uart.h"
+#include "debug.h"
 
 /*
 Need some bounds for the ADC based off AVR and real life values
@@ -25,13 +26,12 @@ higher bound for direct sunlight (saturation)
 volatile uint8_t send_flag = 0; 
 
 //Swtich to the 32Mhz clock from the initial 2Mhz default
-void clockinit(void)
+void clock_init(void)
 {
-	OSC.CTRL |= OSC_RC32MEN_bm;
-	while (!(OSC.STATUS & OSC_RC32MRDY_bm));
-	CCP = CCP_IOREG_gc;
-	CLK.CTRL = CLK_SCLKSEL_RC2M_gc;
-	
+	OSC.CTRL |= OSC_RC32MEN_bm;             // 1. enable the 32MHz oscillator
+	while (!(OSC.STATUS & OSC_RC32MRDY_bm)); // 2. wait until it's stable
+	CCP = CCP_IOREG_gc;                      // 3. unlock protected register
+	CLK.CTRL = CLK_SCLKSEL_RC32M_gc;        // 4. switch NOW (must immediately follow CCP)
 }
 
 // TCC0 Overflow ISR -------------------------------
@@ -77,7 +77,9 @@ void timer_init()
 
 int main(void)
 {
+	debug_init();
 	
+	clock_init();
 	uart_init();
 	uart_send_string(
 	"----------------------------------\r\n"
