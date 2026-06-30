@@ -26,7 +26,7 @@ static void twi_init(void)
 	//PEO -> SDA INPUT, OPEN DRAIN
 	//PE1 -> SCL OUTPUT, OPEN DRAIN
 	PORTE.DIRSET = PIN1_bm;
-	PORTE.DIRCLR = PIN2_bm;
+	PORTE.DIRCLR = PIN0_bm;
 	
 	TWIE.MASTER.BAUD = TWI_BAUD_400K;
 	TWIE.MASTER.CTRLA = TWI_MASTER_ENABLE_bm;
@@ -165,7 +165,7 @@ uint8_t tmp006_init(void)
 	return 1; //set to one to check as flag
 }
 
-uint8_t tmp006_data_read(void)
+uint8_t tmp006_data_ready(void)
 {
 	//DRDY is set low --> means conversion complete
 	return !(PORTD.IN & PIN0_bm);

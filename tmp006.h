@@ -59,12 +59,21 @@
 uint8_t tmp006_init(void);
 
 /*
+* tmp006_data_read
+* Returns 1 if DRDY pin is low
+* Returns 0 if conversion is still going
+*/
+
+uint8_t tmp006_data_ready(void);
+
+/*
 *Tmp target obj
 *Reads VOBJ and TDIE registers and applies the math from datasheet
 *Returns object temp in C
 *Returns float
 *Call when tmp006_data_read()
 */
+
 
 float tmp006_get_tobj(void);
 
