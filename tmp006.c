@@ -128,3 +128,88 @@ static int16_t tmp006_read_reg(uint8_t ptr)
 	
 	return(int16_t)((msb<<8) | lsb);
 }
+
+// Main Functions --------------
+
+
+uint8_t tmp006_init(void)
+{
+	//Configure the TWIE 
+	
+	twi_init();
+	
+	//DRDY on PD0, it sinks the current from the pin which is set high
+	PORTD.DIRCLR = PIN0_bm;
+	
+	//Delay for the sensor to start up. Might delete later?
+	_delay_ms(10);
+	
+	//Verify sensor MAN and Device ID. 0xFE MAN and 0xFF ID
+	uint16_t mfr = (uint16_t)tmp006_read_reg(TMP006_REG_MFR_ID); 
+	uint16_t dev = (uint16_t)tmp006_read_reg(TMP006_REG_DEV_ID);
+	
+	if (mfr != TMP006_MFR_ID_EXPECTED || dev != TMP006_DEV_ID_EXPECTED)
+	{
+		uart_send_string("TMP006 ERROR: sensor not found\r\n");
+		uart_send_string("	MFR ID: 0x"); uart_send_uint(mfr); uart_send_string("\r\n");
+		uart_send_string("	DEV ID: 0X"); uart_send_uint(dev); uart_send_string("\r\n");
+		
+		return 0;
+	}
+	
+	uart_send_string("TMP006 OK: MFR=0X5449 DEV=0X0067\r\n");
+	
+	//Set mode to continuous conversion at 1 per sec, DRDY enable
+	tmp006_write_reg(TMP006_REG_CONFIG, TMP006_CONFIG_ON);
+	
+	return 1; //set to one to check as flag
+}
+
+uint8_t tmp006_data_read(void)
+{
+	//DRDY is set low --> means conversion complete
+	return !(PORTD.IN & PIN0_bm);
+}
+
+float tmp006_get_tdie(void)
+{
+	int16_t raw = tmp006_read_reg(TMP006_REG_TDIE);
+	
+	//14 bit value [15:2]. Bit shift right >> 2 then divide by 32
+	return (float)(raw >> 2)/32.0f;
+}
+
+float tmp006_get_tobj(void)
+{
+	//Read both values
+	int16_t raw_vobj = tmp006_read_reg(TMP006_REG_VOBJ);
+	int16_t raw_tdie = tmp006_read_reg(TMP006_REG_TDIE);
+	
+	//Do conversion
+	// 156.25 nV per LSB
+	float vobj = (float)raw_vobj * 156.25e-9f;
+	
+	//TDIE, right shift 2 bits, divide by 32 and convert to K
+	float tdie	= ((float)(raw_tdie >> 2)/32.0f) + 273.15f;
+	
+	//Equations to take die and vobj values to create a real temp value
+	
+	float dT   = tdie - 298.15f;
+
+	// Step 2: thermopile sensitivity S, corrected for die temperature
+	float S    = TMP006_S0 * (1.0f + (1.75e-3f * dT) - (1.678e-5f * dT * dT));
+
+	// Step 3: self-heating voltage offset
+	float vos  = -2.94e-5f + (-5.7e-7f * dT) + (4.63e-9f * dT * dT);
+
+	// Step 4: corrected thermopile voltage with second-order term
+	float dV   = vobj - vos;
+	float fv   = dV + (13.4f * dV * dV);
+
+	// Step 5: Stefan-Boltzmann quartic root to get object temperature
+	float tobj = powf(powf(tdie, 4.0f) + (fv / S), 0.25f);
+
+	// Return in Celsius
+	return tobj - 273.15f;
+	
+}
