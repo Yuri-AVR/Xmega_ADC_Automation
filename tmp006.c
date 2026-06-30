@@ -95,5 +95,36 @@ static void twi_stop(void)
 
 //------------------------------------------------------
 //	TMP006 REGISTER ACCESS
+// Writes to the TMP006 directly, this is different than sending
+// strings to an instrument. Bits are pushed
 //------------------------------------------------------
 
+static void tmp006_write_reg(uint8_t ptr, uint16_t value)
+{
+	twi_start((TMP006_ADDR << 1)| 0);
+	twi_write_byte(ptr);	//pointer register select
+	twi_write_byte((value >> 8) & 0xFF); //MSB bit first
+	twi_write_byte(value & 0xFF); //LSB
+	twi_stop();
+	
+}
+
+/*
+*	Read 16bit value from register
+*	Transaction: START | ADDR+W | PTR | Sr | ADDR+R | MSB | ACK | LSB | NACK | STOP
+*/
+
+static int16_t tmp006_read_reg(uint8_t ptr)
+{
+	//Write phase: set the pointer register
+	twi_start((TMP006_ADDR << 1)| 0);
+	twi_write_byte(ptr);
+	
+	// Repeat START then switch to read
+	twi_start((TMP006_ADDR<<1)|1);
+	
+	uint8_t msb = twi_read_byte_ack(); // Read MSB, send ACK
+	uint8_t lsb = twi_read_byte_nack(); // Read LSB, send NACK and STOP
+	
+	return(int16_t)((msb<<8) | lsb);
+}
