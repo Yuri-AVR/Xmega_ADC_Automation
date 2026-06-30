@@ -21,8 +21,49 @@
 // TWI Setup Ports
 //---------------------------------------------
 
+
+static void twi_bus_recover(void)
+{
+	// Manually clock SCL 9 times to unstick any half-transmitted byte
+	// in the TMP006's I2C state machine from a previous interrupted transaction
+	
+	// Set both pins as manual GPIO outputs temporarily
+	PORTE.DIRSET = PIN0_bm | PIN1_bm;  // SDA and SCL both output
+	PORTE.OUTSET = PIN0_bm | PIN1_bm;  // both high
+	
+	_delay_us(5);
+	
+	for (uint8_t i = 0; i < 9; i++)
+	{
+		PORTE.OUTCLR = PIN1_bm;   // SCL low
+		_delay_us(5);
+		PORTE.OUTSET = PIN1_bm;   // SCL high
+		_delay_us(5);
+		
+		// Check if SDA is free (slave released it) — if so we can stop early
+		if (PORTE.IN & PIN0_bm) break;
+	}
+	
+	// Issue a STOP condition: SDA low then high while SCL high
+	PORTE.OUTCLR = PIN0_bm;   // SDA low
+	_delay_us(5);
+	PORTE.OUTSET = PIN0_bm;   // SDA high — this is the STOP
+	_delay_us(5);
+	
+	// Return pins to TWI peripheral control
+	PORTE.DIRSET = PIN1_bm;   // SCL output (TWI master drives clock)
+	PORTE.DIRCLR = PIN0_bm;   // SDA input (TWI peripheral manages direction)
+}
+
+
+
+
+
 static void twi_init(void)
 {
+	
+	twi_bus_recover();
+	
 	//PEO -> SDA INPUT, OPEN DRAIN
 	//PE1 -> SCL OUTPUT, OPEN DRAIN
 	PORTE.DIRCLR = PIN0_bm;
@@ -149,7 +190,7 @@ uint8_t tmp006_init(void)
 	twi_init();
 	
 	//DRDY on PD0, it sinks the current from the pin which is set high
-	//PORTC.DIRCLR = PIN4_bm;
+	PORTC.DIRCLR = PIN4_bm;
 	
 	//Delay for the sensor to start up. Might delete later?
 	_delay_ms(10);
