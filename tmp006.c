@@ -25,8 +25,8 @@ static void twi_init(void)
 {
 	//PEO -> SDA INPUT, OPEN DRAIN
 	//PE1 -> SCL OUTPUT, OPEN DRAIN
-	PORTE.DIRSET = PIN1_bm;
 	PORTE.DIRCLR = PIN0_bm;
+	PORTE.DIRSET = PIN1_bm;
 	
 	TWIE.MASTER.BAUD = TWI_BAUD_400K;
 	TWIE.MASTER.CTRLA = TWI_MASTER_ENABLE_bm;
@@ -81,9 +81,10 @@ static uint8_t twi_read_byte_nack(void)
 {
 	
 	//Send NACK and STOP when done reading
-	TWIE.MASTER.CTRLC = TWI_MASTER_ACKACT_bm | TWI_MASTER_CMD_STOP_gc;
-	while (!(TWIE.MASTER.STATUS & TWI_MASTER_RIF_bm));
-	return TWIE.MASTER.DATA;
+	while (!(TWIE.MASTER.STATUS & TWI_MASTER_RIF_bm)); // wait for last byte
+	uint8_t data = TWIE.MASTER.DATA; //	Read the data
+	TWIE.MASTER.CTRLC = TWI_MASTER_ACKACT_bm | TWI_MASTER_CMD_STOP_gc; //NACK + STOP
+	return data;
 }
 
 //STOP TWI
@@ -148,7 +149,7 @@ uint8_t tmp006_init(void)
 	twi_init();
 	
 	//DRDY on PD0, it sinks the current from the pin which is set high
-	PORTD.DIRCLR = PIN0_bm;
+	//PORTC.DIRCLR = PIN4_bm;
 	
 	//Delay for the sensor to start up. Might delete later?
 	_delay_ms(10);
@@ -156,6 +157,9 @@ uint8_t tmp006_init(void)
 	//Verify sensor MAN and Device ID. 0xFE MAN and 0xFF ID
 	uint16_t mfr = (uint16_t)tmp006_read_reg(TMP006_REG_MFR_ID); 
 	uint16_t dev = (uint16_t)tmp006_read_reg(TMP006_REG_DEV_ID);
+	
+	uart_send_string("DEBUG: ID check done\r\n");   // ADD THIS
+
 	
 	if (mfr != TMP006_MFR_ID_EXPECTED || dev != TMP006_DEV_ID_EXPECTED)
 	{
@@ -177,7 +181,7 @@ uint8_t tmp006_init(void)
 uint8_t tmp006_data_ready(void)
 {
 	//DRDY is set low --> means conversion complete
-	return !(PORTD.IN & PIN0_bm);
+	return !(PORTC.IN & PIN4_bm); //Changed from PORTD0 to PORTC PIN4
 }
 
 float tmp006_get_tdie(void)

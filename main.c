@@ -90,6 +90,14 @@ int main(void)
 		while(1); //stop program if no sensor 
 	}
 	
+	
+	uart_send_string(
+	"----------------------------------\r\n");
+	
+	//uart_send_string("BOOT TEST\r\n");   // add this temporarily
+
+	
+	
 	uart_send_string(
 	"----------------------------------\r\n"
 	"ADC Light Meter\r\n"
