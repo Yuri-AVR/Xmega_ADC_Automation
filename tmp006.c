@@ -93,6 +93,8 @@ static void twi_stop(void)
 }
 
 
+
+
 //------------------------------------------------------
 //	TMP006 REGISTER ACCESS
 // Writes to the TMP006 directly, this is different than sending
@@ -107,6 +109,13 @@ static void tmp006_write_reg(uint8_t ptr, uint16_t value)
 	twi_write_byte(value & 0xFF); //LSB
 	twi_stop();
 	
+}
+
+//	Trigger
+
+void tmp006_trigger(void)
+{
+	tmp006_write_reg(TMP006_REG_CONFIG, TMP006_CONFIG_ON);
 }
 
 /*

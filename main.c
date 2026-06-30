@@ -83,6 +83,13 @@ int main(void)
 	clock_init(); //Use 32Mhz clock
 	debug_init(); //output the clock to P7
 	uart_init(); //9600 baud rate, 8 bit no parity
+	
+	if (!tmp006_init())
+	{
+		uart_send_string("Halted: TMP006 not found\r\n");
+		while(1); //stop program if no sensor 
+	}
+	
 	uart_send_string(
 	"----------------------------------\r\n"
 	"ADC Light Meter\r\n"
@@ -90,6 +97,7 @@ int main(void)
 	"Shows RAW ADC Value and Light Value of	the Room\r\n"
 	"----------------------------------\r\n"
 	);
+	
 	led_init(); //Toggle every 1 sec
 	timer_init(); //TCC0 overflow 
 	adc_init(); //Enable ADC channel PA0 light sensor
@@ -100,31 +108,41 @@ int main(void)
 	{
 		if (send_flag)
 		{
-			send_flag = 0; //reset ADC pull
-			
-			uint16_t raw = adc_read_avg(16); //save average to 16bit
-			uint16_t lux = adc_to_lux(raw); //Takes in 16bit output as well
-			
-			//Send the lux value over UART within bounds
-			
+			send_flag = 0; // reset flag
+
+			// --- TMP006 read (synced to this tick) ---
+			if (tmp006_data_ready())
+			{
+				float tobj = tmp006_get_tobj();
+				float tdie = tmp006_get_tdie();
+				uart_send_string("TOBJ: "); uart_send_float(tobj, 2);
+				uart_send_string(" C TDIE "); uart_send_float(tdie, 2);
+				uart_send_string(" C\r\n");
+			}
+			else
+			{
+				uart_send_string("TMP006: not ready this tick\r\n");
+			}
+
+			// --- ADC / light meter read (same tick) ---
+			uint16_t raw = adc_read_avg(16);
+			uint16_t lux = adc_to_lux(raw);
+
 			if (raw < ADC_MIN)
 			{
 				uart_send_string("ERR: sensor low/disconnected\r\n");
-			} 
+			}
 			else if (raw > ADC_MAX)
 			{
 				uart_send_string("ERR: Saturated Diode\r\n");
 			}
 			else
 			{
-				//sprintnf ---> never writes past buffer
 				sprintf(buf, "RAW: %u  LUX: %u\r\n", raw, lux);
 				uart_send_string(buf);
 			}
-			
-			
-			//Show data sent TX LED
-			led_toggle(); 
+
+			led_toggle();
 		}
 	}
 	

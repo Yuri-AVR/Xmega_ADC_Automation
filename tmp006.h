@@ -86,4 +86,9 @@ float tmp006_get_tobj(void);
 
 float tmp006_get_tdie(void);
 
+
+//Trigger
+
+void tmp006_trigger(void);
+
 #endif /* TMP006_H_ */
